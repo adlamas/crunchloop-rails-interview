@@ -8,6 +8,7 @@ describe Api::TodoListsController do
 
     context 'when format is HTML' do
       it 'raises a routing error' do
+
         expect {
           get :index
         }.to raise_error(ActionController::RoutingError, 'Not supported format')
