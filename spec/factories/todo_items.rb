@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :note do
+  factory :todo_item do
     content { Faker::Lorem.paragraph(sentence_count: 2) }
 
     # This tells FactoryBot to look for a :todo_list factory
