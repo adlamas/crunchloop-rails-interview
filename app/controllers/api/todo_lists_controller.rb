@@ -7,12 +7,33 @@ module Api
       respond_to :json
     end
 
+    # POST /api/todolists
     def create
-      render json: { ruta: 'Entro en el metodo CREATE' }
+      @todo_list = TodoList.new(todo_list_params_mapping)
+
+      if @todo_list.save
+        render json: @todo_list, include: :todo_items, status: :created
+      else
+        render json: { errors: @todo_list.errors.full_messages }, status: :unprocessable_entity
+      end
     end
 
-    def coleccion
-      render json: { ruta: 'Entro en el metodo coleccion' }
+    private
+
+    def todo_list_params_mapping
+      raw_params = params.permit(:name, :source_id, items: [:description, :completed, :source_id])
+
+      {
+        name: raw_params[:name],
+        external_id: raw_params[:source_id],
+        todo_items_attributes: (raw_params[:items] || []).map do |item|
+          {
+            content: item[:description],
+            completed: item[:completed] || false,
+            external_id: item[:source_id]
+          }
+        end
+      }
     end
   end
 end
