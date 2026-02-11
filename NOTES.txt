@@ -1,0 +1,80 @@
+========================================================================
+             DEVELOPER NOTES: TODO LIST API INTEGRATION
+========================================================================
+
+--- 1. HIGH-LEVEL OVERVIEW ---------------------------------------------
+
+My approach to this synchronization challenge is built on a service-
+oriented architecture and asynchronous background processing. The 
+primary goal is to ensure that the local database and the external API 
+remain in sync without degrading the end-user experience or exhausting 
+system resources (RAM/CPU).
+
+The solution is divided into three major components:
+- Specialized Action Services: Decoupled services for external CRUD.
+- Background Workers (Push): Sidekiq workers to propagate local changes.
+- Global Sync Service (Pull): Bulk data ingestion for reconciliation.
+
+
+--- 2. KEY DESIGN DECISIONS --------------------------------------------
+
+* SEPARATION OF CONCERNS (SRP): 
+  Instead of a monolithic service, I implemented specific services 
+  (Creator, Updater, Destroyer, Sync). This reduces complexity and 
+  enables isolated testing.
+
+* CODE REUSE vs. STRICT SOLID: 
+  I chose to reuse the persistence logic from TodoSyncService within 
+  the creation workers. While this introduces a slight coupling, I 
+  prioritized data consistency and development speed.
+
+* PERFORMANCE OVER GRANULARITY: 
+  I utilized 'upsert_all' and 'pluck' for item management. Instantiating 
+  ActiveRecord models for 100k+ records is unfeasible. I sacrificed 
+  Rails callbacks in favor of atomic SQL operations to prevent OOM errors.
+
+
+--- 3. RESILIENCE AND ERROR HANDLING -----------------------------------
+
+* SIDEKIQ RETRIES: Workers handle transient API failures (Timeouts, 500s).
+* PARTIAL FAILURE MANAGEMENT: Each list is processed within its own 
+  transaction. Note: If a single item within a list fails, the entire 
+  list synchronization fails to ensure atomicity and easier debugging.
+* CONTEXTUAL LOGGING: Tagged logs ([ExternalAPI], [Worker]) including 
+  response codes and error bodies for production debugging.
+
+
+--- 4. ASSUMPTIONS & EDGE CASES ----------------------------------------
+
+* UNIQUENESS: It is assumed that an item's description is unique within 
+  a TodoList. This allows mapping external IDs during bulk creation.
+* IDEMPOTENCY: Services verify the presence of an 'external_id' before 
+  acting to prevent duplicate records.
+* FREQUENCY: A 1-hour global sync interval is assumed sufficient, 
+  balancing data freshness with server load.
+* RELIABILITY: The 'source_id' from the external API is assumed to be 
+  immutable and persistent.
+
+
+--- 5. AREAS FOR IMPROVEMENT -------------------------------------------
+
+* TEST COVERAGE: Expand unit and full-flow integration tests.
+* ALERTING: Integrate Sentry/AppSignal for exhausted worker retries.
+* TOOLING: Implement Bullet (N+1), Rubocop (linting), and CI pipelines.
+* COMPLETION: Implement all remaining minor edge case flows.
+
+
+--- 6. SETUP INSTRUCTIONS ----------------------------------------------
+
+1. ENVIRONMENT: Set 'EXTERNAL_TODO_API_URL' with the external API URL.
+2. PUSH SYNC (Local to External):
+   - Run Sidekiq: 'bundle exec sidekiq'
+   - Create/Update records via Rails console or UI.
+3. PULL SYNC (External to Local):
+   - Sidekiq is set to 1-hour intervals in 'sidekiq.yml'.
+   - For testing, change 'cron' to "* * * * *" for 1-minute intervals.
+   - Run Sidekiq and wait for the scheduled trigger.
+
+========================================================================
+                            END OF DOCUMENT
+========================================================================
