@@ -37,4 +37,33 @@ RSpec.describe ExternalTodoApiService do
       }.to raise_error(RuntimeError, /Failed to delete remote item: 404/)
     end
   end
+
+  describe '.delete_list' do
+    let(:list_endpoint) { "#{base_url}/todolists/#{ext_list_id}" }
+
+    it 'sends a DELETE request to the specific list endpoint' do
+      stub_request(:delete, list_endpoint).to_return(status: 200)
+
+      response = described_class.delete_list(ext_list_id)
+
+      expect(response.success?).to be true
+      expect(WebMock).to have_requested(:delete, list_endpoint).once
+    end
+
+    it 'raises an error if the API returns a 500 status code' do
+      stub_request(:delete, list_endpoint).to_return(status: 500)
+
+      expect {
+        described_class.delete_list(ext_list_id)
+      }.to raise_error(RuntimeError, /Failed to delete remote list: 500/)
+    end
+
+    it 'raises an error if the API returns a 404 status code' do
+      stub_request(:delete, list_endpoint).to_return(status: 404)
+
+      expect {
+        described_class.delete_list(ext_list_id)
+      }.to raise_error(RuntimeError, /Failed to delete remote list: 404/)
+    end
+  end
 end

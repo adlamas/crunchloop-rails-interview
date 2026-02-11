@@ -14,4 +14,16 @@ class ExternalTodoApiService
 
     response
   end
+
+  def self.delete_list(external_list_id)
+    endpoint = "/todolists/#{external_list_id}"
+
+    response = delete(endpoint, timeout: 10)
+
+    unless response.success?
+      raise "Failed to delete remote list: #{response.code}"
+    end
+
+    response
+  end
 end

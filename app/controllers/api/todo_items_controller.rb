@@ -13,7 +13,7 @@ module Api
       if todo_item.save
         render json: todo_item, status: :created
       else
-        render json: { errors: todo_item.erorrs }, status: :unprocessable_entity
+        render json: { errors: todo_item.errors }, status: :unprocessable_entity
       end
     end
 
@@ -40,7 +40,7 @@ module Api
       if todo_item.update(todo_items_params)
         render json: todo_item, status: :ok
       else
-        render json: { errors: todo_item.erorrs }, status: :unprocessable_entity
+        render json: { errors: todo_item.errors }, status: :unprocessable_entity
       end
     end
 
