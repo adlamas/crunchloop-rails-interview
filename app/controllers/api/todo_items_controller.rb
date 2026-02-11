@@ -38,6 +38,13 @@ module Api
       todo_item = TodoItem.find(params[:id])
 
       if todo_item.update(todo_items_params)
+        ext_list_id = todo_item.todo_list.external_id
+        ext_item_id = todo_item.external_id
+
+        if ext_list_id.present? && ext_item_id.present?
+          RemoteUpdateItemWorker.perform_async(todo_item.id)
+        end
+
         render json: todo_item, status: :ok
       else
         render json: { errors: todo_item.errors }, status: :unprocessable_entity
