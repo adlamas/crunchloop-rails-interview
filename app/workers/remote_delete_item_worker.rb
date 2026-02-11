@@ -8,6 +8,7 @@ class RemoteDeleteItemWorker
 
     ExternalTodoApiDestroyerService.delete_item(external_list_id, external_item_id)
   rescue StandardError => e
+    Rails.logger.error "[RemoteDelete] Error deleting item - for TodoList source ID: #{external_list_id}"
     Rails.logger.error "[RemoteDelete] Error deleting item #{external_item_id}: #{e.message}"
     raise e
   end

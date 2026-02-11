@@ -4,7 +4,7 @@ class ExternalTodoApiCreatorService
 
   def self.create_list(todo_list)
     endpoint = "/todolists"
-    
+
     Rails.logger.info "[ExternalAPI] POST CreateList started for TodoList ID: #{todo_list.id}"
 
     body = {
