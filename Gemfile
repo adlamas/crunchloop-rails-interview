@@ -53,6 +53,7 @@ gem 'sidekiq', '~> 7.3.10'
 gem 'httparty', '~> 0.24.2'
 
 gem 'dotenv-rails'
+gem 'sidekiq-cron'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
