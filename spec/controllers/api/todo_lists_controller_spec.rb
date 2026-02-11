@@ -126,4 +126,44 @@ describe Api::TodoListsController do
       end
     end
   end
+
+  describe "DELETE destroy" do
+    let!(:todo_list) { TodoList.create!(name: "Project X", external_id: "ext_L_999") }
+
+    let!(:item_1) { TodoItem.create!(content: "Task 1", todo_list: todo_list) }
+    let!(:item_2) { TodoItem.create!(content: "Task 2", todo_list: todo_list) }
+
+    it "deletes the list and its associated items locally and enqueues remote deletion" do
+      expect(RemoteDeleteListWorker).to receive(:perform_async).with("ext_L_999")
+
+      expect {
+        delete :destroy, params: { id: todo_list.id }, format: :json
+      }.to change(TodoList, :count).by(-1)
+       .and change(TodoItem, :count).by(-2)
+
+      expect(response.status).to eq(200)
+    end
+
+    it "returns 404 if the list does not exist" do
+      expect {
+        delete :destroy, params: { id: 99999 }, format: :json
+      }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    context "when list has no external_id" do
+      let!(:local_list) { TodoList.create!(name: "Local Only") }
+      let!(:local_item) { TodoItem.create!(content: "Local Task", todo_list: local_list) }
+
+      it "deletes locally (including items) but does NOT enqueue remote deletion" do
+        expect(RemoteDeleteListWorker).not_to receive(:perform_async)
+
+        expect {
+          delete :destroy, params: { id: local_list.id }, format: :json
+        }.to change(TodoList, :count).by(-1)
+         .and change(TodoItem, :count).by(-1)
+
+        expect(response.status).to eq(200)
+      end
+    end
+  end
 end

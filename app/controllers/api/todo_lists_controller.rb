@@ -18,6 +18,21 @@ module Api
       end
     end
 
+    def destroy
+      todo_list = TodoList.find(params[:id])
+      ext_list_id = todo_list.external_id
+
+      if todo_list.destroy
+        if ext_list_id.present?
+          RemoteDeleteListWorker.perform_async(ext_list_id)
+        end
+
+        render json: todo_list, status: :ok
+      else
+        render json: { errors: todo_list.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+
     private
 
     def todo_list_params_mapping
