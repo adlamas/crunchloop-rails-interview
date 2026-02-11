@@ -1,14 +1,14 @@
 require 'rails_helper'
 require 'webmock/rspec'
 
-RSpec.describe ExternalTodoApiService do
+RSpec.describe ExternalTodoApiDestroyerService do
   let(:base_url) { "http://localhost:3001" }
   let(:ext_list_id) { "L1" }
   let(:ext_item_id) { "I1" }
   let(:endpoint) { "#{base_url}/todolists/#{ext_list_id}/todoitems/#{ext_item_id}" }
 
   before do
-    allow(ExternalTodoApiService).to receive(:base_uri).and_return(base_url)
+    allow(ExternalTodoApiDestroyerService).to receive(:base_uri).and_return(base_url)
   end
 
   describe '.delete_item' do
