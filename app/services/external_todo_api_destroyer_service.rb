@@ -1,4 +1,4 @@
-class ExternalTodoApiService
+class ExternalTodoApiDestroyerService
   include HTTParty
 
   base_uri ENV.fetch('EXTERNAL_TODO_API_URL', 'http://localhost:3000')

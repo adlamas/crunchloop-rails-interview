@@ -106,4 +106,41 @@ RSpec.describe TodoSyncService do
       end
     end
   end
+
+  describe '#process_sync' do
+    let(:service_instance) { described_class.new }
+    let(:single_list_data) do
+      {
+        "source_id" => "new_remote_id",
+        "name" => "Remote List",
+        "items" => [
+          { "source_id" => "new_item_id", "description" => "Remote Task", "completed" => true }
+        ]
+      }
+    end
+
+    it 'processes a single hash (from Worker) as successfully as an array' do
+      expect { 
+        service_instance.process_sync(single_list_data) 
+      }.to change(TodoList, :count).by(1).and change(TodoItem, :count).by(1)
+
+      synced_list = TodoList.find_by(external_id: "new_remote_id")
+      expect(synced_list).to be_present
+      expect(synced_list.name).to eq("Remote List")
+      
+      synced_item = TodoItem.find_by(external_id: "new_item_id")
+      expect(synced_item.content).to eq("Remote Task")
+      expect(synced_item.completed).to be true
+    end
+
+    it 'updates existing records instead of creating duplicates' do
+      existing_list = TodoList.create!(name: "Old Name", external_id: "new_remote_id")
+      
+      expect {
+        service_instance.process_sync(single_list_data)
+      }.not_to change(TodoList, :count)
+      
+      expect(existing_list.reload.name).to eq("Remote List")
+    end
+  end
 end

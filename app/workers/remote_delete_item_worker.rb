@@ -6,7 +6,7 @@ class RemoteDeleteItemWorker
   def perform(external_list_id, external_item_id)
     return if external_list_id.blank? || external_item_id.blank?
 
-    ExternalTodoApiService.delete_item(external_list_id, external_item_id)
+    ExternalTodoApiDestroyerService.delete_item(external_list_id, external_item_id)
   rescue StandardError => e
     Rails.logger.error "[RemoteDelete] Error deleting item #{external_item_id}: #{e.message}"
     raise e

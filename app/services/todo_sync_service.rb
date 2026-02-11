@@ -27,9 +27,9 @@ class TodoSyncService
     raise e
   end
 
-  private
-
   def process_sync(external_lists)
+    external_lists = [external_lists] if external_lists.is_a?(Hash)
+
     external_lists.each do |list_data|
       # Wrapping each list in its own block to handle partial failures.
       # If one list fails, the loop continues with the next one.
@@ -37,7 +37,6 @@ class TodoSyncService
         TodoList.transaction do
           sync_single_list(list_data)
         end
-        Rails.logger.info "[SyncService] Successfully synced list: #{list_data['source_id']}"
       rescue StandardError => e
         # Partial failure: log the specific list error and skip to the next
         Rails.logger.error "[SyncService] Failed to sync list #{list_data['source_id']}: #{e.message}"
@@ -47,6 +46,8 @@ class TodoSyncService
       end
     end
   end
+
+  private
 
   def sync_single_list(list_data)
     # Upsert logic for the parent TodoList
