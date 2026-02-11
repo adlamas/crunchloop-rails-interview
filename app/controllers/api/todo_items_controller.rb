@@ -20,10 +20,17 @@ module Api
     def destroy
       todo_item = TodoItem.find(params[:id])
 
+      ext_list_id = todo_item.todo_list.external_id
+      ext_item_id = todo_item.external_id
+
       if todo_item.destroy
+        if ext_list_id.present? && ext_item_id.present?
+          RemoteDeleteItemWorker.perform_async(ext_list_id, ext_item_id)
+        end
+
         render json: todo_item, status: :ok
       else
-        render json: { errors: todo_item.erorrs }, status: :unprocessable_entity
+        render json: { errors: todo_item.errors }, status: :unprocessable_entity
       end
     end
 
