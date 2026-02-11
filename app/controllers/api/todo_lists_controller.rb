@@ -12,6 +12,10 @@ module Api
       @todo_list = TodoList.new(todo_list_params_mapping)
 
       if @todo_list.save
+        if @todo_list.external_id.blank?
+          RemoteCreateListWorker.perform_async(@todo_list.id)
+        end
+
         render json: @todo_list, include: :todo_items, status: :created
       else
         render json: { errors: @todo_list.errors.full_messages }, status: :unprocessable_entity
